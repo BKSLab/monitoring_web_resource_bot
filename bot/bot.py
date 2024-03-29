@@ -9,7 +9,10 @@ from handlers import admin_handlers
 
 
 async def main() -> None:
-    create_table(config)
+    create_table(
+        db_name=config.db_name.get_secret_value(),
+        table_name=config.table_name.get_secret_value(),
+    )
     bot = Bot(token=config.bot_token.get_secret_value())
     dp = Dispatcher()
 

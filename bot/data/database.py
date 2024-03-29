@@ -1,7 +1,5 @@
 import sqlite3
 
-from config_data.config import Settings
-
 
 def database_connection(db_name: str) -> sqlite3.Connection:
     """Создания подключения к базе данных."""
@@ -13,12 +11,12 @@ def database_connection(db_name: str) -> sqlite3.Connection:
     return connection
 
 
-def create_table(config: Settings) -> None:
+def create_table(db_name: str, table_name: str) -> None:
     """Создание таблицы для хранения данных о ресурсах пользователей.."""
 
-    connection = database_connection(config.db_name.get_secret_value())
+    connection = database_connection(db_name)
     sql_query = f'''
-            CREATE TABLE IF NOT EXISTS {config.table_name.get_secret_value()}(
+            CREATE TABLE IF NOT EXISTS {table_name}(
             id INTEGER PRIMARY KEY,
             url TEXT NOT NULL,
             tg_user_id INTEGER NOT NULL,

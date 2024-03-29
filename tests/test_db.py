@@ -28,7 +28,10 @@ def test_create_table(db_session: sqlite3.Cursor):
     )
 
     table_name = config_db.table_name.get_secret_value()
-    create_table(config_db)
+    create_table(
+        db_name=config_db.db_name.get_secret_value(),
+        table_name=table_name,
+    )
     tables_after_created = [
         ''.join(table) for table in db_session.execute(sql_query).fetchall()
     ]
