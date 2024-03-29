@@ -2,7 +2,7 @@ from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings(BaseSettings):
+class SettingsTest(BaseSettings):
     """Класс конфигурации для тестовой базы данных."""
 
     table_name: SecretStr
@@ -13,4 +13,4 @@ class Settings(BaseSettings):
     )
 
 
-config_db = Settings()
+config_db = SettingsTest()
