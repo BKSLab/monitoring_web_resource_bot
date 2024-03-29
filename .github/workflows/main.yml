@@ -24,7 +24,6 @@ jobs:
     - name: Test with flake8
       run: |
         python -m flake8 bot/
-        python -m pytest
     - name: Test with pytest
       env:
         TABLE_NAME: ${{ secrets.TABLE_NAME }}
