@@ -12,7 +12,7 @@ class ButtonData:
     """Данные для создания inline кнопок."""
 
     show_my_resources: InlineButtonData = InlineButtonData(
-        'Отслеживаемые ресурсы', 'monitoring_resources'
+        'Мои ресурсы', 'monitoring_resources'
     )
     test_all_resources: InlineButtonData = InlineButtonData(
         'Тест всех ресурсов', 'test_all_resources'
@@ -20,4 +20,10 @@ class ButtonData:
     add_resource: InlineButtonData = InlineButtonData(
         'Добавить ресурс', 'add_resource'
     )
-    back_to_main: InlineButtonData = InlineButtonData('Назад', 'back_to_main')
+    add: InlineButtonData = InlineButtonData('Добавить', 'add')
+    back_to_main: InlineButtonData = InlineButtonData(
+        'На главную', 'back_to_main'
+    )
+    delete_all_resources: InlineButtonData = InlineButtonData(
+        'Удалить все URL', 'delete_del_allresources'
+    )

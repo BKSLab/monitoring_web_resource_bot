@@ -9,6 +9,7 @@ from bot.data.database import (
     create_table,
     deleting_one_row_for_user,
     deleting_rows_for_user,
+    exists_url,
     get_all_rows,
     get_all_rows_for_user,
 )
@@ -22,14 +23,15 @@ def test_create_table(db_session: sqlite3.Cursor):
     tables_before_create = db_session.execute(sql_query).fetchall()
 
     assert not tables_before_create, (
-        f'В тестовой базе: {config_db.db_name.get_secret_value()} на момент '
+        f'В тестовой базе: {config_db.db_name_test.get_secret_value()} на момент '
         f'начала теста содержатся таблицы: {tables_before_create}.\n'
         'Убедитесь, что тестовая база создается правильно.'
     )
 
-    table_name = config_db.table_name.get_secret_value()
+    table_name = config_db.table_name_test.get_secret_value()
+    print(f'table_name {table_name}')
     create_table(
-        db_name=config_db.db_name.get_secret_value(),
+        db_name=config_db.db_name_test.get_secret_value(),
         table_name=table_name,
     )
     tables_after_created = [
@@ -60,7 +62,7 @@ def test_create_table(db_session: sqlite3.Cursor):
 @pytest.mark.usefixtures('db_session')
 def test_add_data_to_table(db_session: sqlite3.Cursor):
     """Тест функции добавления данных в таблицу."""
-    table_name = config_db.table_name.get_secret_value()
+    table_name = config_db.table_name_test.get_secret_value()
     sql_query = f'SELECT COUNT(*) FROM {table_name}'
     counds_records = db_session.execute(sql_query).fetchone()[0]
 
@@ -74,7 +76,7 @@ def test_add_data_to_table(db_session: sqlite3.Cursor):
     tg_user_id = 123456
 
     query_result = add_data_to_table(
-        db_name=config_db.db_name.get_secret_value(),
+        db_name=config_db.db_name_test.get_secret_value(),
         table_name=table_name,
         url=url,
         tg_user_id=tg_user_id,
@@ -119,7 +121,7 @@ def test_add_data_to_table(db_session: sqlite3.Cursor):
     )
 
     result_two = add_data_to_table(
-        db_name=config_db.db_name.get_secret_value(),
+        db_name=config_db.db_name_test.get_secret_value(),
         table_name=table_name,
         url=url,
         tg_user_id=tg_user_id,
@@ -134,10 +136,7 @@ def test_add_data_to_table(db_session: sqlite3.Cursor):
         f'функции {add_data_to_table.__name__}'
     )
 
-    text_message_error = (
-        'url https://touch-it.ru/ уже существует в БД: '
-        'UNIQUE constraint failed: resource_data_test.url'
-    )
+    text_message_error = 'url https://touch-it.ru/ уже существует в БД'
     assert all(key in result_two for key in ('status', 'message_error')), (
         f'Функция {add_data_to_table.__name__} вернула словарь с ключами, '
         'которые не соответствуют ТЗ.\nУбедитесь, что функция '
@@ -148,10 +147,7 @@ def test_add_data_to_table(db_session: sqlite3.Cursor):
         'Должна возвращать значение Falseв записе словаря с ключем "status"'
     )
 
-    text_message_error = (
-        'url https://touch-it.ru/ уже существует в БД: '
-        'UNIQUE constraint failed: resource_data_test.url'
-    )
+    text_message_error = 'url https://touch-it.ru/ уже существует в БД'
 
     assert result_two.get('message_error') == text_message_error, (
         'Текст сообщения об ошибки при попытке повторной записи в БД '
@@ -161,14 +157,50 @@ def test_add_data_to_table(db_session: sqlite3.Cursor):
 
 
 @pytest.mark.usefixtures('db_session', 'insert_records_in_table')
+def test_exists_url():
+    """
+    Тест функции проверяющей наличие в таблице URL
+    пользователя перед его тестом.
+    """
+    table_name = config_db.table_name_test.get_secret_value()
+    existing_url = resource_data[0][0]
+    tg_user_id = resource_data[0][1]
+
+    query_result = exists_url(
+        db_name=config_db.db_name_test.get_secret_value(),
+        table_name=table_name,
+        url=existing_url,
+        tg_user_id=tg_user_id,
+    )
+    assert query_result, (
+        'Функция должна была вернуть запись, соответствующую '
+        f'следующим данным: {resource_data[0]}. Проверьте работу '
+        f'функции {exists_url.__name__}'
+    )
+    missing_url = 'https://www.google-shmugal.com/'
+    tg_user_id = 111111
+    query_result = exists_url(
+        db_name=config_db.db_name_test.get_secret_value(),
+        table_name=table_name,
+        url=missing_url,
+        tg_user_id=tg_user_id,
+    )
+    assert not query_result, (
+        'Функция должна была вернуть False, так как получила на вход '
+        'данные с отсутствующим URL в таблице ресурсов.'
+        f'Проверьте работу функции {exists_url.__name__}'
+    )
+
+
+@pytest.mark.usefixtures('db_session', 'insert_records_in_table')
 def test_get_all_rows():
     """
     Тест функции возвращающей все данные пользователей
     и отслеживаемых ими ресурсов.
     """
-    table_name = config_db.table_name.get_secret_value()
+    table_name = config_db.table_name_test.get_secret_value()
     query_result = get_all_rows(
-        db_name=config_db.db_name.get_secret_value(),
+        db_name=config_db.db_name_test.get_secret_value(),
         table_name=table_name,
     )
     assert isinstance(query_result, list), (
@@ -186,11 +218,11 @@ def test_get_all_rows():
 @pytest.mark.usefixtures('db_session', 'insert_records_in_table')
 def test_get_all_rows_for_user():
     """Тест функции, возвращающей все записи одно пользователля."""
-    table_name = config_db.table_name.get_secret_value()
+    table_name = config_db.table_name_test.get_secret_value()
     tg_user_id = 111111
 
     query_result = get_all_rows_for_user(
-        db_name=config_db.db_name.get_secret_value(),
+        db_name=config_db.db_name_test.get_secret_value(),
         table_name=table_name,
         tg_user_id=tg_user_id,
     )
@@ -218,8 +250,8 @@ def test_deleting_all_user_resources():
     Тест функции, удаляющей все записи об отслеживаемых
     ресурсах одного пользователя.
     """
-    table_name = config_db.table_name.get_secret_value()
-    db_name = config_db.db_name.get_secret_value()
+    table_name = config_db.table_name_test.get_secret_value()
+    db_name = config_db.db_name_test.get_secret_value()
     tg_user_id = 111111
 
     deleting_rows_for_user(
@@ -239,8 +271,8 @@ def test_deleting_all_user_resources():
 @pytest.mark.usefixtures('db_session', 'insert_records_in_table')
 def test_deleting_one_row_for_user(db_session: sqlite3.Cursor):
     """Тест функции удаления одной записи пользователя."""
-    table_name = config_db.table_name.get_secret_value()
-    db_name = config_db.db_name.get_secret_value()
+    table_name = config_db.table_name_test.get_secret_value()
+    db_name = config_db.db_name_test.get_secret_value()
     _, url, tg_user_id = get_all_rows(
         db_name=db_name,
         table_name=table_name,

@@ -38,15 +38,35 @@ def add_data_to_table(
         connection.cursor().execute(sql_query, (url, tg_user_id))
         connection.commit()
         connection.close()
-    except sqlite3.IntegrityError as error:
+    except sqlite3.IntegrityError:
         return {
             'status': False,
-            'message_error': f'url {url} уже существует в БД: {error}',
+            'message_error': f'url {url} уже существует в БД',
         }
     finally:
         if connection:
             connection.close()
     return {'status': True}
+
+
+def exists_url(
+    db_name: str,
+    table_name: str,
+    url: str,
+    tg_user_id: int,
+) -> bool:
+    """Проверка наличия URL в БД."""
+    connection = database_connection(db_name)
+    sql_query = (
+        f'SELECT EXISTS (SELECT * FROM {table_name} WHERE '
+        '(url =? AND tg_user_id = ?))'
+    )
+    query_result = (
+        connection.cursor().execute(sql_query, (url, tg_user_id)).fetchone()[0]
+    )
+    if connection:
+        connection.close()
+    return query_result
 
 
 def get_all_rows(db_name: str, table_name: str) -> list[tuple[int, str, int]]:
